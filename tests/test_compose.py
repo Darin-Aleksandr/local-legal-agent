@@ -121,3 +121,9 @@ def test_render_docx_and_pdf(tmp_path: Path) -> None:
     clean = to_pdf(to_docx(draft, tmp_path / "clean" / "иск.docx", with_checks=False), tmp_path / "clean")
     with fitz.open(clean) as doc:
         assert "Проверить перед подачей" not in "".join(p.get_text() for p in doc)
+
+
+def test_capped_penalty_has_no_open_ended_demand() -> None:
+    draft = compose("иск", dossier(), on=date(2026, 11, 15))
+    penalty = next(d for d in draft.demands if d.startswith("Взыскать неустойку"))
+    assert "400 000,00 руб." in penalty and "фактического исполнения" not in penalty

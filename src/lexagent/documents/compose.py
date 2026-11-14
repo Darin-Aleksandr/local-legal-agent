@@ -398,13 +398,17 @@ def _lawsuit(f: Facts, m: Money, on: date) -> Draft:
     insurer = f("insurer_name")
     demands = [f"Взыскать с {insurer} в пользу истца страховое возмещение (убытки) в размере {calc.rub(m.principal)}."]
     if m.penalty and m.penalty.total:
-        demands.append(
-            f"Взыскать неустойку за период с {m.penalty.periods[0].start:%d.%m.%Y} по "
-            f"{m.penalty.periods[-1].end:%d.%m.%Y} в размере {calc.rub(m.penalty.total)}, а также "
-            "неустойку в размере 1% от суммы недоплаты за каждый день с "
-            f"{m.penalty.periods[-1].end:%d.%m.%Y} по день фактического исполнения, но не более "
-            f"{calc.rub(calc.OSAGO_LIMIT - m.penalty.total)} в совокупности."
+        first, last = m.penalty.periods[0].start, m.penalty.periods[-1].end
+        demand = (
+            f"Взыскать неустойку за период с {first:%d.%m.%Y} по {last:%d.%m.%Y} в размере {calc.rub(m.penalty.total)}"
         )
+        left = calc.OSAGO_LIMIT - m.penalty.total
+        if left > 0 and m.principal > 0:
+            demand += (
+                f", а также неустойку в размере 1% от суммы недоплаты за каждый день с {last:%d.%m.%Y} "
+                f"по день фактического исполнения, но не более {calc.rub(left)} в совокупности"
+            )
+        demands.append(demand + ".")
     demands += [
         f"Взыскать штраф в размере 50% от суммы недоплаченного страхового возмещения "
         f"({calc.rub(m.fine)} на дату подачи иска).",
