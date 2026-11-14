@@ -58,7 +58,10 @@ def build(agent: Agent) -> gr.Blocks:
                 "Проверьте распознанное: исправьте значение, если нужно, и нажмите «Подтвердить». "
                 "Документы собираются только из подтверждённых данных — остальное помечается [ПРОВЕРИТЬ]."
             )
-            case = gr.Dropdown(label="Дело", choices=_cases(agent), interactive=True)
+            choices = _cases(agent)
+            case = gr.Dropdown(
+                label="Дело", choices=choices, value=choices[0][1] if choices else None, interactive=True
+            )
             refresh = gr.Button("Обновить список")
             table = gr.Dataframe(headers=["Поле", "Значение", "Подтверждено", "Источник"], interactive=False, wrap=True)
             with gr.Row():
@@ -78,7 +81,8 @@ def build(agent: Agent) -> gr.Blocks:
             case_files = gr.File(label="Файлы документа", interactive=False)
             for kind, button in buttons.items():
                 button.click(lambda c, k=kind: _document(agent, c, k), [case], [status, case_files])
-            case.change(lambda c: _table(agent, c), [case], [table])
+            case.change(lambda c: _table(agent, c), [case], [table], api_name="case_table")
+            app.load(lambda c: _table(agent, c), [case], [table])
             refresh.click(lambda: gr.update(choices=_cases(agent)), None, [case])
             confirm.click(lambda c, f, v: _confirm(agent, c, f, v), [case, field, value], [table, status])
 

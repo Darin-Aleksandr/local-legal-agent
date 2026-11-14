@@ -198,7 +198,8 @@ class Agent:
             final = version / gas.gas_name(draft.title, on, verdict.pages)
             shutil.move(pdf, final)
             verdict = gas.check_pdf(final, orientation=False, previews=version / "превью")
-            lines += ["", *verdict.lines()]
+            head, *checks = verdict.lines()
+            lines += ["", f"**{head}**", *[f"- {c.strip()}" for c in checks]]
             files.append(final)
         except RenderError as exc:
             lines.append(f"PDF не собран: {exc}")
